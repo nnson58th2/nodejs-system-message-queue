@@ -17,13 +17,29 @@ const messageService = {
             const { channel } = await connectToRabbitMQ();
             const notificationQueue = 'notificationQueueProcess'; // assertQueue
 
-            const timeExpired = 15000;
-            setTimeout(() => {
-                channel.consume(notificationQueue, (msg) => {
+            // 1. TTL
+            // const timeExpired = 15000;
+            // setTimeout(() => {
+            //     channel.consume(notificationQueue, (msg) => {
+            //         console.log(`SEND NOTIFICATION SUCCESSFULLY PROCESSED::`, msg.content.toString());
+            //         channel.ack(msg);
+            //     });
+            // }, timeExpired);
+
+            // 2. LOGIC
+            channel.consume(notificationQueue, (msg) => {
+                try {
+                    const numberTest = Math.random();
+                    console.log('numberTest :>> ', numberTest);
+                    if (numberTest < 0.8) {
+                        throw new Error(`SEND NOTIFICATION FAILED::HOT FIX`);
+                    }
                     console.log(`SEND NOTIFICATION SUCCESSFULLY PROCESSED::`, msg.content.toString());
                     channel.ack(msg);
-                });
-            }, timeExpired);
+                } catch (error) {
+                    channel.nack(msg, false, false);
+                }
+            });
         } catch (error) {
             console.error(`ConsumerToQueueNormal error:: `, error.message);
         }
